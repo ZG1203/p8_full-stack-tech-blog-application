@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login & Registration</title>
+    <link rel="stylesheet" href="./assets/style.css">
+</head>
+
+<body>
+    <div class="container" id="auth-container">
+        <h2>Register</h2>
+        <input type="text" id="username" placeholder="Username">
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="register()">Register</button>
+        <hr>
+        <h2>Login</h2>
+        <input type="email" id="login-email" placeholder="Email">
+        <input type="password" id="login-password" placeholder="Password">
+        <button onclick="login()">Login</button>
+    </div>
+
+    <div class="container" id="app-container">
+        <div class="header">
+            <h2>Welcome</h2>
+            <button onclick="logout()">Logout</button>
+        </div>
+        <hr>
+        <div class="main-content">
+            <h2>Create a Post</h2>
+            <input type="text" id="post-title" placeholder="Title">
+            <textarea id="post-content" placeholder="Content"></textarea>
+            <select id="post-category">
+                    <option value="datascience">Data Science</option>
+                    <option value="programming">Programming</option>
+                    <option value="security">Cyber Security</option>
+            </select>
+            <button onclick="createPost()">Submit Post</button>
+        </div>
+        
+        <hr>
+        <h2>Posts</h2>
+        <button onclick="fetchPosts()">Load Posts</button>
+        <div id="posts"></div>
+
+        <div class="postdetail" id="post-detail">
+            <h3 id="postdetail-title"></h3>
+            <div class="postdetail-summary">
+                <span id="postdetail-author"></span>
+                <span id="postdetail-category"></span>
+                <span id="postdetail-date"></span>
+            </div>
+            <div class="postdetail-content"></div>
+            <div class="postdetail-actions" id="postdetail-actions">
+                <button class="edit" onclick="editPost()">Edit</button>
+                <button class="delete" onclick="deletePost()">Delete</button>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <h3>Categories</h3>
+            <ul class="filter">
+                <li class="active" data-category="all">All Posts</li>
+                <li data-category="datascience">Data Science</li>
+                <li data-category="programming">Programming</li>
+                <li data-category="security">Cyber Security</li>
+            </ul>
+            <div class="user-posts">
+                <h4>My Posts</h4>
+                <button onclick="viewMyPosts()">View My Posts</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="./assets/script.js"></script>
+</body>
+
+</html>
