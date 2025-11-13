@@ -59,9 +59,39 @@
             </div>
         </div>
 
+        <!-- normal sidebar -->
         <div class="sidebar">
             <h3>Categories</h3>
             <ul class="filter">
+                <li class="active" data-category="all">All Posts</li>
+                <li data-category="datascience">Data Science</li>
+                <li data-category="programming">Programming</li>
+                <li data-category="security">Cyber Security</li>
+            </ul>
+            <div class="user-posts">
+                <h4>My Posts</h4>
+                <button onclick="viewMyPosts()">View My Posts</button>
+            </div>
+        </div>
+
+        <!-- mobile header -->
+        <div class="container" id="app-container">
+            <div class="header">
+                <div class="mobile-header">
+                    <div class="hamburger-menu" id="hamburger-menu">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <h2>Welcome</h2>
+                </div>
+                <button onclick="logout()">Logout</button>
+            </div>
+        <!-- mobile sidebar -->
+         <div class="mobile-sidebar" id="mobile-sidebar">
+            <button class="close-btn" id="close-sidebar">&times;</button>
+            <h3>Categories</h3>
+            <ul class="category-filter">
                 <li class="active" data-category="all">All Posts</li>
                 <li data-category="datascience">Data Science</li>
                 <li data-category="programming">Programming</li>
