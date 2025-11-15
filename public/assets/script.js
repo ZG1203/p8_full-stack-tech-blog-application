@@ -1,4 +1,9 @@
 let token = localStorage.getItem("authToken");
+let currentUser = null;
+let currentPost = null;
+let isViewingMyPosts = false;
+let currentCategory = 'all';
+let allPosts = [];
 
 function register() {
   const username = document.getElementById("username").value;
@@ -36,6 +41,7 @@ function login() {
       if (data.token) {
         localStorage.setItem("authToken", data.token);
         token = data.token;
+        currentUser = data.userData;
 
         alert("User Logged In successfully");
 
@@ -64,206 +70,271 @@ function logout() {
     token = null;
     document.getElementById("auth-container").classList.remove("hidden");
     document.getElementById("app-container").classList.add("hidden");
+    location.reload();
   });
 }
 
-function fetchPosts() {
+function fetchPosts( ) {
   fetch("http://localhost:3001/api/posts", {
     method: "GET",
     headers: { Authorization: `Bearer ${token}` },
   })
     .then((res) => res.json())
-    .then((posts) => {
+    .then((posts) => { 
+      allPosts = posts;
       const postsContainer = document.getElementById("posts");
       postsContainer.innerHTML = "";
       posts.forEach((post) => {
         const div = document.createElement("div");
-        div.innerHTML = `<h3>${post.title}</h3><p>${
-          post.content
-        }</p><small>By: ${post.postedBy} on ${new Date(
-          post.createdOn
-        ).toLocaleString()}</small>`;
+        div.style.textAlign = "left";
+        div.style.borderBottom = "1px solid #eee";
+        div.innerHTML = `<h3>${post.title}</h3>
+          <small>By: ${post.author} on ${new Date(post.createdOn).toLocaleString()} Category: ${post.category}</small>
+          <p>${post.content}</p>`;
         postsContainer.appendChild(div);
       });
     });
 }
 
+// Create post
 function createPost() {
   const title = document.getElementById("post-title").value;
   const content = document.getElementById("post-content").value;
+  const categoryValue = document.getElementById("post-category").value;
+
+  const categoryMap = {
+      'datascience': 1,
+      'programming': 2,
+      'security': 3
+    };
+
+  const categoryId = categoryMap[categoryValue];
+    
   fetch("http://localhost:3001/api/posts", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ title, content, postedBy: "User" }),
+    body: JSON.stringify({ title, content, categoryId, userId: currentUser.id }),
   })
-    .then((res) => res.json())
-    .then(() => {
-      alert("Post created successfully");
-      fetchPosts();
-    });
+  .then((res) => res.json())
+  .then(() => {
+    alert("Post created successfully");
+    fetchPosts();
+  })
+  .catch((error) => {
+    console.log(error);
+    alert("Error creating post");
+  });
 }
 
-// to update below
-// Load posts based on current category and view mode
-function loadPosts() {
-    const postsContainer = document.getElementById('posts');
-    postsContainer.innerHTML = '';
+// to edit or update post
+function changePost(post) {
+    currentPost = post;
 
-    let filteredPosts = posts;
+    document.getElementById('postdetail-title').textContent = post.title;
+    document.getElementById('postdetail-author').textContent = `By ${post.author} |`;
+    document.getElementById('postdetail-category').textContent = ` Category: ${post.category} |`;
+    document.getElementById('postdetail-date').textContent = `Posted on: ${new Date(post.createdOn).toLocaleDateString()}`;
+    document.querySelector('.postdetail-content').textContent = post.content; 
 
-    if (isViewingMyPosts) {
-        if (!currentUser) {
-            alert('Please login to view your posts');
-            return;
-        }
-        filteredPosts = posts.filter(post => post.author === currentUser.username);
-    } else if (currentCategory !== 'all') {
-        filteredPosts = posts.filter(post => post.category === currentCategory);
-    }
+    // Show edit/delete buttons when user is viewing own posts
+    const postActions = document.getElementById('postdetail-actions');
+    postActions.classList.remove('hidden');
 
-    if (filteredPosts.length === 0) {
-        postsContainer.innerHTML = '<p>No posts found.</p>';
+    // Show post detail and hide posts list
+    document.querySelector('.posts-list').classList.add('hidden');
+    document.getElementById('post-detail').classList.remove('hidden');
+}
+
+
+// Edit post
+function editPost() {
+    if (!currentPost) return;
+
+    document.getElementById('post-title').value = currentPost.title;
+    document.getElementById('post-content').value = currentPost.content;
+    const categoryMap = {
+        1: 'datascience',
+        2: 'programming', 
+        3: 'security'
+    };
+    document.getElementById('post-category').value = categoryMap[currentPost.categoryId]
+
+    // Change create post button to update
+    const createButton = document.querySelector('.createpost button');
+    createButton.textContent = 'Update Post';
+    createButton.onclick = updatePost;
+
+    // reload all posts
+    backToPostsList();
+}
+
+// Update post
+function updatePost() {
+    if (!currentPost) return;
+
+    const title = document.getElementById('post-title').value;
+    const content = document.getElementById('post-content').value;
+    const categoryvalue = document.getElementById('post-category').value;
+
+    if (!title || !content) {
+        alert('Please fill in title and content');
         return;
     }
 
-    filteredPosts.forEach(post => {
-        const postElement = document.createElement('div');
-        postElement.className = 'post-item';
-        postElement.setAttribute('data-id', post.id);
-        
-        const excerpt = post.content.length > 150 
-            ? post.content.substring(0, 150) + '...' 
-            : post.content;
+    const categoryMap = {
+        'datascience': 1,
+        'programming': 2,
+        'security': 3
+    };
 
-        postElement.innerHTML = `
-            <h4>${post.title}</h4>
-            <div class="post-meta">By ${post.author} | ${post.category} | ${post.date}</div>
-            <div class="post-excerpt">${excerpt}</div>
-        `;
+    const categoryId = categoryMap[categoryvalue];
 
-        postElement.addEventListener('click', () => showPostDetail(post.id));
-        postsContainer.appendChild(postElement);
+    //send data to server
+    fetch(`http://localhost:3001/api/posts/${currentPost.id}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ 
+            title, 
+            content, 
+            categoryId,
+            userId: currentUser.id 
+        }),
+    })
+    .then((res) => res.json())
+    .then(( ) => {    
+      // Reset form
+      document.getElementById('post-title').value = '';
+      document.getElementById('post-content').value = '';
+      // Change button to create post
+      const createButton = document.querySelector('.createpost button');
+      createButton.textContent = 'Create Post';
+      createButton.onclick = createPost;
+      alert('Post updated successfully!');
+      fetchPosts();
+      backToPostsList();
+    })
+  .catch((error) => {
+      console.log(error);
+      alert("Error updating post");
     });
 }
 
-// Show post detail
-        function showPostDetail(postId) {
-            const post = posts.find(p => p.id === postId);
-            if (!post) return;
+// Delete post
+function deletePost() {
+  if (!currentPost) return;
 
-            currentPost = post;
+  if (confirm('Are you sure you want to delete this post?')) {
+    //send data to server
+    fetch(`http://localhost:3001/api/posts/${currentPost.id}`, {
+      method: "DELETE",
+      headers: {
+          Authorization: `Bearer ${token}`,
+      },
+    })
+    .then((res) => res.json())
+    .then(( ) => {
+      alert('Post deleted successfully!');
+      fetchPosts(); // Refresh posts list
+      backToPostsList(); // Go back to posts list
+    })
+    .catch((error) => {
+        console.log(error);
+        alert("Error deleting post");
+    });
+  }
+}
 
-            document.getElementById('detail-title').textContent = post.title;
-            document.getElementById('detail-author').textContent = `By ${post.author}`;
-            document.getElementById('detail-category').textContent = post.category;
-            document.getElementById('detail-date').textContent = post.date;
-            document.getElementById('detail-content').textContent = post.content;
+function backToPostsList() {
+    document.querySelector('.posts-list').classList.remove('hidden');
+    document.getElementById('post-detail').classList.add('hidden');
+}
 
-            // Show edit/delete buttons if the post belongs to the current user
-            const postActions = document.getElementById('post-actions');
-            if (currentUser && post.author === currentUser.username) {
-                postActions.classList.remove('hidden');
-            } else {
-                postActions.classList.add('hidden');
-            }
 
-            // Show post detail and hide posts list
-            document.querySelector('.posts-list').classList.add('hidden');
-            document.getElementById('post-detail').classList.remove('hidden');
-        }
+// Load posts based on category
+function loadPosts(category = 'all') {
+  currentCategory = category;
+  isViewingMyPosts = false;
 
-        // Edit post
-        function editPost() {
-            if (!currentPost) return;
+  backToPostsList();
 
-            document.getElementById('post-title').value = currentPost.title;
-            document.getElementById('post-content').value = currentPost.content;
-            document.getElementById('post-category').value = currentPost.category;
+  document.querySelectorAll('.category-filter li').forEach(li => {
+  li.classList.remove('active');
+  if (li.getAttribute('data-category') === category) {
+      li.classList.add('active');
+  }
+});
+  displayFilteredPosts()
+}
 
-            // Change create post button to update
-            const createButton = document.querySelector('.post-creation button');
-            createButton.textContent = 'Update Post';
-            createButton.onclick = updatePost;
+function viewMyPosts() {
+  isViewingMyPosts = true;
+  currentCategory = 'all';
 
-            // Scroll to post creation form
-            document.querySelector('.post-creation').scrollIntoView({ behavior: 'smooth' });
-        }
+  backToPostsList();
 
-        // Update post
-        function updatePost() {
-            if (!currentPost) return;
+  document.querySelectorAll('.category-filter li').forEach(li => {li.classList.remove('active');});
+  document.querySelector('.category-filter li[data-category="all"]').classList.add('active');
 
-            const title = document.getElementById('post-title').value;
-            const content = document.getElementById('post-content').value;
-            const category = document.getElementById('post-category').value;
+  const postsListTitle = document.getElementById("posts-list-title");
+  postsListTitle.textContent = "My Posts"; 
+  displayFilteredPosts();
+}
 
-            if (!title || !content) {
-                alert('Please fill in title and content');
-                return;
-            }
+function displayFilteredPosts() {
+  const postsContainer = document.getElementById("posts");
+  const postsListTitle = document.getElementById("posts-list-title");
+  postsContainer.innerHTML = "";
+  let filteredPosts = allPosts;
+    
+  // Apply category filter
+  if (currentCategory !== 'all') {
+    const categoryMap = {
+        'datascience': 1,
+        'programming': 2,
+        'security': 3
+    };
 
-            // Update post
-            const postIndex = posts.findIndex(p => p.id === currentPost.id);
-            if (postIndex !== -1) {
-                posts[postIndex].title = title;
-                posts[postIndex].content = content;
-                posts[postIndex].category = category;
-                
-                localStorage.setItem('posts', JSON.stringify(posts));
-                
-                // Reset form
-                document.getElementById('post-title').value = '';
-                document.getElementById('post-content').value = '';
-                
-                // Reset button
-                const createButton = document.querySelector('.post-creation button');
-                createButton.textContent = 'Submit Post';
-                createButton.onclick = createPost;
-                
-                loadPosts();
-                showPostDetail(currentPost.id);
-                alert('Post updated successfully!');
-            }
-        }
+    filteredPosts = filteredPosts.filter(post => post.categoryId === categoryMap[currentCategory]);
+    const categoryNames = {
+        'datascience': 'Data Science',
+        'programming': 'Programming',
+        'security': 'Cyber Security'
+    };
+    postsListTitle.textContent = `${categoryNames[currentCategory]} Posts`;
+  }
 
-        // Delete post
-        function deletePost() {
-            if (!currentPost) return;
+  if (isViewingMyPosts && currentUser) {
+    filteredPosts = filteredPosts.filter(post => post.userId === currentUser.id);
+    postsListTitle.textContent = "My Posts"; 
+  } else if (!isViewingMyPosts && currentCategory === 'all') {
+    postsListTitle.textContent = "All Posts";
+  }
 
-            if (confirm('Are you sure you want to delete this post?')) {
-                posts = posts.filter(p => p.id !== currentPost.id);
-                localStorage.setItem('posts', JSON.stringify(posts));
-                
-                // Hide post detail and show posts list
-                document.getElementById('post-detail').classList.add('hidden');
-                document.querySelector('.posts-list').classList.remove('hidden');
-                
-                loadPosts();
-                alert('Post deleted successfully!');
-            }
-        }
+  if (filteredPosts.length === 0) {
+    postsContainer.innerHTML = '<p>No posts found.</p>';
+    return;
+  }
 
-// View user's posts in the main content area
-        function viewMyPosts() {
-            if (!currentUser) {
-                alert('Please login to view your posts');
-                return;
-            }
-
-            isViewingMyPosts = true;
-            updatePostsListTitle();
-            loadPosts();
-            
-            // Hide post detail if it's open
-            document.getElementById('post-detail').classList.add('hidden');
-            document.querySelector('.posts-list').classList.remove('hidden');
-            
-            // Close mobile sidebar if open
-            closeMobileSidebar();
-        }
-
-        // Initialize the application when the page loads
-        document.addEventListener('DOMContentLoaded', init);
+  filteredPosts.forEach((post) => {
+    const div = document.createElement("div");
+    div.style.textAlign = "left";
+    div.style.padding = "10px";
+    div.style.borderBottom = "1px solid #eee";
+    if (isViewingMyPosts) {
+      div.style.cursor = "pointer";
+      div.addEventListener('click', () => changePost(post)); 
+    } else {
+      div.style.cursor = "default"; 
+    }
+    div.innerHTML = `<h3>${post.title}</h3>
+      <small>By: ${post.author} on ${new Date(post.createdOn).toLocaleString()} Category: ${post.category}</small>
+      <p>${post.content}</p>;`
+    postsContainer.appendChild(div);
+  });
+}

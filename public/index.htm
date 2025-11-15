@@ -34,7 +34,7 @@
         </div>
     </div> 
     <!-- main application -->
-    <div class="container" id="app-container">
+    <div class="container hidden" id="app-container">
         <!-- normal header -->
         <div class="header">
             <h2>Welcome</h2>
@@ -75,7 +75,7 @@
             </div>
 
             <!-- post detail section -->
-            <div class="postdetail" id="post-detail">
+            <div class="postdetail hidden" id="post-detail">
                 <h3 id="postdetail-title"></h3>
                 <div class="postdetail-summary">
                     <span id="postdetail-author"></span>
@@ -94,10 +94,10 @@
         <div class="sidebar">
             <h3>Categories</h3>
             <ul class="category-filter">
-                <li class="active" data-category="all">All Posts</li>
-                <li data-category="datascience">Data Science</li>
-                <li data-category="programming">Programming</li>
-                <li data-category="security">Cyber Security</li>
+                <li class="active" data-category="all" onclick="loadPosts('all')">All Posts</li>
+                <li data-category="datascience" onclick="loadPosts('datascience')">Data Science</li>
+                <li data-category="programming" onclick="loadPosts('programming')">Programming</li>
+                <li data-category="security" onclick="loadPosts('security')">Cyber Security</li>
             </ul>
             <div class="user-posts">
                 <h3>My Posts</h3>
@@ -111,17 +111,17 @@
             <label for="sidebar-toggle" class="close-btn" id="close-sidebar">&times;</label>
             <h3>Categories</h3>
             <ul class="category-filter">
-                <li class="active" data-category="all">All Posts</li>
-                <li data-category="datascience">Data Science</li>
-                <li data-category="programming">Programming</li>
-                <li data-category="security">Cyber Security</li>
+                <li class="active" data-category="all" onclick="loadPosts('all')">All Posts</li>
+                <li data-category="datascience" onclick="loadPosts('datascience')">Data Science</li>
+                <li data-category="programming" onclick="loadPosts('programming')">Programming</li>
+                <li data-category="security" onclick="loadPosts('security')">Cyber Security</li>
             </ul>
             <div class="user-posts">
                 <h4>My Posts</h4>
                 <button onclick="viewMyPosts()">View My Posts</button>
             </div>
         </div>
-
+        
     </div>
 
     <label for="sidebar-toggle" class="overlay" id="overlay"></label>
