@@ -38,6 +38,3 @@ A full stack tech blog application built with **Node.js**, **Express**, **Sequel
    ```
 10. Access the application
    Open your browser and navigate to: http://localhost:3001
-
-## Link to deployed app:
-
